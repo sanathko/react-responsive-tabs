@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
-import Tabs from 'react-responsive-tabs';
+import React, { PureComponent } from "react";
+//  import Tabs from 'react-responsive-tabs';
+import Tabs from "../components/index";
 
-import dummyData from '../dummyData';
+import dummyData from "../dummyData";
 
-import './styles.css';
+import "./styles.css";
 
 export class Basic extends PureComponent {
   constructor(props) {
@@ -14,20 +15,22 @@ export class Basic extends PureComponent {
       transform: true,
       showInkBar: false,
       items: this.getSimpleTabs(),
-      selectedTabKey: 0,
+      selectedTabKey: 0
     };
   }
 
-  onChangeProp = propsName =>
-    evt => {
-      this.setState({ [propsName]: evt.target.type === 'checkbox' ? evt.target.checked : +evt.target.value });
-    };
+  onChangeProp = propsName => evt => {
+    this.setState({
+      [propsName]:
+        evt.target.type === "checkbox" ? evt.target.checked : +evt.target.value
+    });
+  };
 
   getSimpleTabs = () =>
     dummyData.map(({ name, biography }, index) => ({
       key: index,
       title: name,
-      getContent: () => biography,
+      getContent: () => biography
     }));
 
   render() {
@@ -37,22 +40,31 @@ export class Basic extends PureComponent {
         <div className="basic__props">
           <div className="basic__prop">
             <label>
-              <input type="checkbox" onChange={this.onChangeProp('showMore')} checked={showMore} />
-              {' '}
+              <input
+                type="checkbox"
+                onChange={this.onChangeProp("showMore")}
+                checked={showMore}
+              />{" "}
               showMore
             </label>
           </div>
           <div className="basic__prop">
             <label>
-              <input type="checkbox" onChange={this.onChangeProp('transform')} checked={transform} />
-              {' '}
-              {'transform to accordion when width < 800px'}
+              <input
+                type="checkbox"
+                onChange={this.onChangeProp("transform")}
+                checked={transform}
+              />{" "}
+              {"transform to accordion when width < 800px"}
             </label>
           </div>
           <div className="basic__prop">
             <label>
-              <input type="checkbox" onChange={this.onChangeProp('showInkBar')} checked={showInkBar} />
-              {' '}
+              <input
+                type="checkbox"
+                onChange={this.onChangeProp("showInkBar")}
+                checked={showInkBar}
+              />{" "}
               showInkBar
             </label>
           </div>
@@ -61,11 +73,10 @@ export class Basic extends PureComponent {
               <input
                 type="number"
                 min={0}
-                onChange={this.onChangeProp('selectedTabKey')}
+                onChange={this.onChangeProp("selectedTabKey")}
                 className="basic__input"
                 value={selectedTabKey}
-              />
-              {' '}
+              />{" "}
               selected tab
             </label>
           </div>
