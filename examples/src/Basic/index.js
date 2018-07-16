@@ -15,7 +15,8 @@ export class Basic extends PureComponent {
       transform: true,
       showInkBar: false,
       items: this.getSimpleTabs(),
-      selectedTabKey: 0
+      selectedTabKey: 0,
+      multiSelectTab: false
     };
   }
 
@@ -34,7 +35,13 @@ export class Basic extends PureComponent {
     }));
 
   render() {
-    const { showMore, transform, showInkBar, selectedTabKey } = this.state;
+    const {
+      showMore,
+      transform,
+      showInkBar,
+      selectedTabKey,
+      multiSelectTab
+    } = this.state;
     return (
       <div className="basic__wrapper">
         <div className="basic__props">
@@ -78,6 +85,16 @@ export class Basic extends PureComponent {
                 value={selectedTabKey}
               />{" "}
               selected tab
+            </label>
+          </div>
+          <div className="basic__prop">
+            <label>
+              <input
+                type="checkbox"
+                onChange={this.onChangeProp("multiSelectTab")}
+                checked={multiSelectTab}
+              />{" "}
+              multiple select tab
             </label>
           </div>
         </div>

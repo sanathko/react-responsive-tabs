@@ -23,7 +23,8 @@ export default class Tabs extends Component {
       tabsTotalWidth: 0,
       showMoreWidth: 40,
       selectedTabKey: props.selectedTabKey,
-      focusedTabKey: null
+      focusedTabKey: null,
+      selectedTabs: props.selectedTabs
     };
 
     this.onResizeThrottled = throttle(this.onResize, props.resizeThrottle, {
@@ -36,11 +37,17 @@ export default class Tabs extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { items } = this.props;
+    const { items, selectedTabs } = this.props;
     const { selectedTabKey } = this.state;
     const newState = {};
     if (items !== nextProps.items) {
       newState.blockWidth = 0;
+    }
+
+    if (nextProps.multiSelectTab) {
+      if (selectedTabs !== nextProps.selectedTabs) {
+        newState.selectedTabs = nextProps.selectedTabs;
+      }
     }
 
     if (selectedTabKey !== nextProps.selectedTabKey) {
@@ -54,8 +61,7 @@ export default class Tabs extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { selectedTabKey, blockWidth, showMoreWidth } = this.state;
-
-    return (
+    const updateCondition =
       this.props.items !== nextProps.items ||
       nextProps.transform !== this.props.transform ||
       nextProps.showMore !== this.props.showMore ||
@@ -63,9 +69,16 @@ export default class Tabs extends Component {
       nextProps.allowRemove !== this.props.allowRemove ||
       nextProps.removeActiveOnly !== this.props.removeActiveOnly ||
       nextState.blockWidth !== blockWidth ||
-      nextState.showMoreWidth !== showMoreWidth ||
-      nextState.selectedTabKey !== selectedTabKey
-    );
+      nextState.showMoreWidth !== showMoreWidth;
+    if (nextProps.multiSelectTab) {
+      return (
+        updateCondition ||
+        nextState.selectedTabKey !== selectedTabKey ||
+        nextState.selectedTabKey === selectedTabKey ||
+        this.props.selectedTabs.length !== nextProps.selectedTabs.length
+      );
+    }
+    return updateCondition || nextState.selectedTabKey !== selectedTabKey;
   }
 
   componentDidUpdate() {
@@ -81,7 +94,29 @@ export default class Tabs extends Component {
   };
 
   onChangeTab = selectedTabKey => {
-    this.setState({ selectedTabKey });
+    if (this.props.multiSelectTab) {
+      const index = this.state.selectedTabs.indexOf(selectedTabKey);
+      if (index !== -1) {
+        this.setState((previousState, props) => {
+          return {
+            selectedTabKey,
+            selectedTabs: this.state.selectedTabs.filter(
+              selectedTab => selectedTab !== selectedTabKey
+            )
+          };
+        });
+      } else {
+        this.setState((previousState, props) => {
+          return {
+            selectedTabKey,
+            selectedTabs: [...this.state.selectedTabs, selectedTabKey]
+          };
+        });
+      }
+    } else {
+      this.setState({ selectedTabKey });
+    }
+
     if (this.props.onChange) {
       this.props.onChange(selectedTabKey);
     }
@@ -240,12 +275,15 @@ export default class Tabs extends Component {
     onBlur: this.onBlurTab,
     onRemove,
     panelId: panelPrefix + key,
+    expanded: this.isExpanded(key),
+    multiSelectTab: this.props.multiSelectTab,
     classNames: this.getClassNamesFor("tab", {
       selected,
       collapsed,
       tabIndex,
       disabled,
-      className
+      className,
+      expanded: this.isExpanded(key)
     })
   });
 
@@ -267,15 +305,19 @@ export default class Tabs extends Component {
 
   getClassNamesFor = (
     type,
-    { selected, collapsed, tabIndex, disabled, className = "" }
+    { selected, collapsed, tabIndex, disabled, expanded, className = "" }
   ) => {
     switch (type) {
       case "tab":
         return cs("RRT__tab", className, this.props.tabClass, {
           "RRT__tab--first": !tabIndex,
-          "RRT__tab--selected": selected,
+          "RRT__tab--selected":
+            (this.props.multiSelectTab && !collapsed && selected) ||
+            (!this.props.multiSelectTab && selected),
           "RRT__tab--disabled": disabled,
-          "RRT__tab--collapsed": collapsed
+          "RRT__tab--collapsed": collapsed,
+          "RRT__tab--expanded":
+            this.props.multiSelectTab && collapsed && expanded
         });
       case "panel":
         return cs("RRT__panel", className, this.props.panelClass);
@@ -297,6 +339,10 @@ export default class Tabs extends Component {
     }
 
     return selectedTabKey;
+  };
+
+  isExpanded = key => {
+    return this.state.selectedTabs.includes(key);
   };
 
   showMoreChanged = element => {
@@ -349,11 +395,18 @@ export default class Tabs extends Component {
         <div className={tabsClasses}>
           {tabsVisible.reduce((result, tab) => {
             result.push(<Tab {...this.getTabProps(tab)} />);
-
-            if (collapsed && selectedTabKey === tab.key) {
-              result.push(
-                <TabPanel {...this.getPanelProps(panels[tab.key])} />
-              );
+            if (collapsed) {
+              if (this.props.multiSelectTab) {
+                if (this.state.selectedTabs.includes(tab.key)) {
+                  result.push(
+                    <TabPanel {...this.getPanelProps(panels[tab.key])} />
+                  );
+                }
+              } else if (selectedTabKey === tab.key) {
+                result.push(
+                  <TabPanel {...this.getPanelProps(panels[tab.key])} />
+                );
+              }
             }
             return result;
           }, [])}
@@ -397,11 +450,14 @@ Tabs.propTypes = {
   /* eslint-disable react/no-unused-prop-types */
   // list of tabs
   items: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  //  list of selected tabs
+  selectedTabs: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
   /* eslint-enable react/no-unused-prop-types */
   // selected tab key
   selectedTabKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   // show 'X' and remove tab
   allowRemove: PropTypes.bool,
+  multiSelectTab: PropTypes.bool,
   // show 'X' closing element only for active tab
   removeActiveOnly: PropTypes.bool,
   // move tabs to the special `Show more` tab if they don't fit into a screen
@@ -429,8 +485,10 @@ Tabs.propTypes = {
 
 Tabs.defaultProps = {
   items: [],
+  selectedTabs: [0],
   selectedTabKey: undefined,
   showMore: true,
+  multiSelectTab: false,
   showInkBar: false,
   allowRemove: false,
   removeActiveOnly: false,

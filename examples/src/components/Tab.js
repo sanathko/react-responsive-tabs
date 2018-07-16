@@ -1,7 +1,10 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
 
-function onTabClick(selected, onClick, originalKey) {
+function onTabClick(selected, onClick, originalKey, multiSelectTab) {
+  if (multiSelectTab) {
+    return () => onClick(originalKey);
+  }
   return () => !selected && onClick(originalKey);
 }
 
@@ -37,7 +40,19 @@ export default class Tab extends Component {
   };
 
   render() {
-    const { id, classNames, selected, disabled, panelId, onClick, onFocus, onBlur, originalKey } = this.props;
+    const {
+      id,
+      classNames,
+      selected,
+      disabled,
+      panelId,
+      onClick,
+      onFocus,
+      onBlur,
+      originalKey,
+      expanded,
+      multiSelectTab
+    } = this.props;
 
     return (
       <div
@@ -45,12 +60,12 @@ export default class Tab extends Component {
         role="tab"
         className={classNames}
         id={id}
-        aria-selected={selected ? 'true' : 'false'}
-        aria-expanded={selected ? 'true' : 'false'}
-        aria-disabled={disabled ? 'true' : 'false'}
+        aria-selected={selected ? "true" : "false"}
+        aria-expanded={expanded ? "true" : "false"}
+        aria-disabled={disabled ? "true" : "false"}
         aria-controls={panelId}
         tabIndex="0"
-        onClick={onTabClick(selected, onClick, originalKey)}
+        onClick={onTabClick(selected, onClick, originalKey, multiSelectTab)}
         onFocus={onFocus(originalKey)}
         onBlur={onBlur}
       >
@@ -61,20 +76,27 @@ export default class Tab extends Component {
 }
 
 Tab.propTypes = {
-  children: PropTypes.oneOfType([PropTypes.array, PropTypes.object, PropTypes.string]),
+  children: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.object,
+    PropTypes.string
+  ]),
   disabled: PropTypes.bool,
 
   // generic props
   panelId: PropTypes.string.isRequired,
   selected: PropTypes.bool.isRequired,
+  expanded: PropTypes.bool,
+  multiSelectTab: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
   onRemove: PropTypes.func,
   onFocus: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   allowRemove: PropTypes.bool,
   id: PropTypes.string.isRequired,
-  originalKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  classNames: PropTypes.string.isRequired,
+  originalKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+    .isRequired,
+  classNames: PropTypes.string.isRequired
 };
 
 Tab.defaultProps = {
@@ -82,4 +104,6 @@ Tab.defaultProps = {
   onRemove: () => {},
   allowRemove: false,
   disabled: false,
+  expanded: false,
+  multiSelectTab: false
 };
